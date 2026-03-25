@@ -17,7 +17,7 @@ def override_db(path: str):
 @pytest.fixture
 def client(db_path):
     app.dependency_overrides[get_db_path] = override_db(db_path)
-    yield TestClient(app)
+    yield TestClient(app, raise_server_exceptions=False)
     app.dependency_overrides.clear()
 
 
