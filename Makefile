@@ -13,4 +13,4 @@ test:  ## Run tests
 	uv run pytest
 
 seed:  ## Seed malicious URLs from CSV (default: data/urls.csv)
-	uv run python scripts/seed.py $(or $(CSV),data/urls.csv)
+	PYTHONPATH=. uv run python scripts/seed.py $(or $(CSV),data/urls.csv)
