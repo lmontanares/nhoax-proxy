@@ -1,4 +1,5 @@
 import sqlite3
+from sqlite3 import OperationalError
 
 import pytest
 from fastapi.testclient import TestClient
@@ -65,3 +66,26 @@ def test_multi_segment_path(client_with_url):
     response = client_with_url.get("/urlinfo/1/evil.com:8080/malware/download")
     assert response.status_code == 200
     assert response.json() == {"safe": False}
+
+
+def test_db_error_returns_503(monkeypatch, client):
+    def broken_lookup(url, db_path=None):
+        raise OperationalError("no such table: urls")
+
+    monkeypatch.setattr("app.main.is_url_malicious", broken_lookup)
+    response = client.get("/urlinfo/1/example.com/path")
+    assert response.status_code == 503
+
+
+def test_unexpected_error_returns_500(monkeypatch, client):
+    def broken_lookup(url, db_path=None):
+        raise RuntimeError("unexpected failure")
+
+    monkeypatch.setattr("app.main.is_url_malicious", broken_lookup)
+    response = client.get("/urlinfo/1/example.com/path")
+    assert response.status_code == 500
+
+
+def test_404_still_works(client):
+    response = client.get("/nonexistent")
+    assert response.status_code == 404
